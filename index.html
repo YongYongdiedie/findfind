@@ -21,8 +21,6 @@
   .row-actions { display:inline-flex; gap:8px; flex-wrap:wrap; margin-left: 8px; }
   .chip { display:inline-block; padding:2px 8px; background:#f7f7f7; border-radius:999px; font-size:12px; border:1px solid var(--border); margin-left:8px;}
   .footer { margin-top: 14px; font-size:13px; color:var(--muted); }
-
-  /* Autocomplete */
   .ac-wrap { position: relative; flex: 1 1 auto; }
   .ac-list { position: absolute; top: 46px; left: 0; right: 0; background: #fff; border:1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.08); z-index: 10; }
   .ac-item { padding: 10px 12px; border-bottom:1px solid #f1f1f1; cursor: pointer; display:flex; justify-content: space-between; align-items: center; }
@@ -30,15 +28,6 @@
   .ac-item:hover, .ac-item.active { background:#eef3ff; }
   .ac-sub { font-size: 12px; color: var(--muted); }
   mark { background: #ffef99; padding: 0 2px; border-radius: 3px; }
-
-  /* 방문자 카운터 */
-  .visitor-counter {
-    position: absolute;
-    bottom: 12px;
-    left: 20px;
-    font-size: 12px;
-    color: var(--muted);
-  }
 </style>
 </head>
 <body>
@@ -56,7 +45,7 @@
     <div class="footer">※ 이름 일부만 입력해도 자동완성 목록이 아래에 표시됩니다. Enter로 선택하거나 클릭하세요.</div>
 
     <!-- 방문자 카운터 -->
-    <div class="visitor-counter" id="visitorCounter"></div>
+    <div id="visitorCounter" style="font-size:13px; color:#666; margin-top:10px;"></div>
   </div>
 
 <script>
@@ -74,12 +63,10 @@ async function load() {
 function normalizeName(n) {
   return n.replace(/\([^)]*\)/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
-
 function copyText(txt) {
   navigator.clipboard.writeText(txt);
   alert('복사됨: ' + txt);
 }
-
 function render(list) {
   const el = document.getElementById('out');
   if (!list || list.length === 0) {
@@ -102,7 +89,6 @@ function render(list) {
   `).join('<tr><td colspan="2" style="height:18px;background:#fff"></td></tr>');
   el.innerHTML = `<table>${rows}</table>`;
 }
-
 function doSearchByName(name) {
   const kw = name.trim().toLowerCase();
   const result = DATA.filter(x =>
@@ -112,7 +98,6 @@ function doSearchByName(name) {
   );
   render(result);
 }
-
 function scoreName(name, kw) {
   const n = name.toLowerCase();
   const nn = normalizeName(name);
@@ -125,13 +110,11 @@ function scoreName(name, kw) {
   if (tokens.some(t => t.startsWith(k))) return 50;
   return 0;
 }
-
 function highlight(name, kw) {
   if (!kw) return name;
   const re = new RegExp('(' + kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig');
   return name.replace(re, '<mark>$1</mark>');
 }
-
 function buildSuggestions(kw) {
   if (!kw) return [];
   const scored = DATA.map(x => ({
@@ -147,7 +130,6 @@ function buildSuggestions(kw) {
   const arr = Array.from(map.values()).sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
   return arr.slice(0, 8);
 }
-
 function renderAC(list, kw) {
   const ac = document.getElementById('ac');
   if (!list || list.length === 0) { ac.style.display = 'none'; ac.innerHTML = ''; return; }
@@ -168,26 +150,21 @@ function renderAC(list, kw) {
     });
   });
 }
-
 function sStrip(s){ return s.replace(/\s+/g,' ').trim(); }
-
 function debounce(fn, wait=120) {
   let t; return function(...args){ clearTimeout(t); t = setTimeout(() => fn.apply(this, args), wait); };
 }
-
 const onInput = debounce(() => {
   if (composing) return;
   const kw = sStrip(document.getElementById('kw').value);
   const list = buildSuggestions(kw);
   renderAC(list, kw);
 }, 120);
-
 function handleKey(e) {
   const ac = document.getElementById('ac');
   if (ac.style.display === 'none') return;
   const items = Array.from(ac.querySelectorAll('.ac-item'));
   if (!items.length) return;
-
   if (e.key === 'ArrowDown') {
     e.preventDefault();
     acIndex = (acIndex + 1) % items.length;
@@ -211,28 +188,6 @@ function handleKey(e) {
   }
   items.forEach((el, idx) => el.classList.toggle('active', idx === acIndex));
 }
-
-// === 방문자 카운터 ===
-function updateVisitorCounter(){
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-  const lastDate = localStorage.getItem("visit_date");
-  let todayCount = parseInt(localStorage.getItem("today_count") || "0");
-  let totalCount = parseInt(localStorage.getItem("total_count") || "0");
-
-  if(lastDate !== today){
-    todayCount = 0; // reset daily counter
-    localStorage.setItem("visit_date", today);
-  }
-  todayCount++;
-  totalCount++;
-
-  localStorage.setItem("today_count", todayCount);
-  localStorage.setItem("total_count", totalCount);
-
-  document.getElementById("visitorCounter").innerText = 
-    `오늘 방문자수: ${todayCount} | 총 방문자수: ${totalCount}`;
-}
-
 window.addEventListener('DOMContentLoaded', async () => {
   await load();
   const kw = document.getElementById('kw');
@@ -242,9 +197,45 @@ window.addEventListener('DOMContentLoaded', async () => {
   kw.addEventListener('keydown', handleKey);
   document.getElementById('btnSearch').addEventListener('click', () => doSearchByName(kw.value));
   document.getElementById('btnClear').addEventListener('click', () => { kw.value=''; render([]); document.getElementById('ac').style.display='none'; });
-
-  updateVisitorCounter(); // 방문자 카운터 실행
 });
+</script>
+
+<!-- Firebase SDK 불러오기 -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js"></script>
+<script>
+  // Firebase 초기화
+  const firebaseConfig = {
+    apiKey: "AIzaSyDn1yreXT_cXYF2gc9e4BD3kqsDNTulyL0",
+    authDomain: "findfinddb.firebaseapp.com",
+    databaseURL: "https://findfinddb-default-rtdb.asia-southeast1.firebasedatabase.app/",
+    projectId: "findfinddb",
+    storageBucket: "findfinddb.firebasestorage.app",
+    messagingSenderId: "718046785995",
+    appId: "1:718046785995:web:2afc2a9ec5ef094f42c64e",
+    measurementId: "G-0MWV0T1JH8"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // === Firebase 방문자 카운터 ===
+  function updateVisitorCounter(){
+    const today = new Date().toISOString().split('T')[0];
+    const todayRef = db.ref("visitors/daily/" + today);
+    const totalRef = db.ref("visitors/total");
+    todayRef.transaction(current => (current || 0) + 1);
+    totalRef.transaction(current => (current || 0) + 1);
+    todayRef.on("value", snap => {
+      const todayCount = snap.val() || 0;
+      totalRef.once("value").then(totalSnap => {
+        const totalCount = totalSnap.val() || 0;
+        document.getElementById("visitorCounter").innerText =
+          `오늘 방문자수: ${todayCount} | 총 방문자수: ${totalCount}`;
+      });
+    });
+  }
+  document.addEventListener("DOMContentLoaded", updateVisitorCounter);
 </script>
 </body>
 </html>
+
