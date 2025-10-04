@@ -220,14 +220,21 @@ window.addEventListener('DOMContentLoaded', async () => {
   const db = firebase.database();
 
   // === Firebase 방문자 카운터 ===
-  function updateVisitorCounter(){
-    const today = new Date().toISOString().split('T')[0];
-    const todayRef = db.ref("visitors/daily/" + today);
-    const totalRef = db.ref("visitors/total");
-    todayRef.transaction(current => (current || 0) + 1);
-    totalRef.transaction(current => (current || 0) + 1);
-    todayRef.on("value", snap => {
-      const todayCount = snap.val() || 0;
+  function updateVisitorCounter() {
+  const today = new Date().toISOString().split('T')[0];
+  const todayRef = db.ref("visitors/daily/" + today);
+  const totalRef = db.ref("visitors/total");
+
+  // 오늘 방문자 +1
+  todayRef.transaction(current => (current || 0) + 1);
+
+  // 총 방문자 +1
+  totalRef.transaction(current => (current || 0) + 1);
+
+  // 값 가져오기
+  function refreshCounts() {
+    todayRef.once("value").then(todaySnap => {
+      const todayCount = todaySnap.val() || 0;
       totalRef.once("value").then(totalSnap => {
         const totalCount = totalSnap.val() || 0;
         document.getElementById("visitorCounter").innerText =
@@ -235,6 +242,15 @@ window.addEventListener('DOMContentLoaded', async () => {
       });
     });
   }
+
+  // 페이지 처음 로드될 때 한 번 표시
+  refreshCounts();
+
+  // 값이 바뀔 때마다 다시 표시
+  todayRef.on("value", refreshCounts);
+  totalRef.on("value", refreshCounts);
+}
+
   document.addEventListener("DOMContentLoaded", updateVisitorCounter);
 </script>
 </body>
